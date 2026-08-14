@@ -30,13 +30,9 @@ return (
     onSubmit={handleSubmit}
     className="w-full max-w-sm bg-[#151824] border border-gray-800 rounded-lg p-6 space-y-4"
     >
-        <div className="text-center mb-4">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Blocked &middot; Running &middot; Next</div>
-    <div className="flex items-center justify-center gap-2">
-        <img src="/ruris-logo.png" alt="Ruris" className="h-9 w-auto" />
-        <span className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 bg-clip-text text-transparent">BRN</span>
-        </div>
-    <div className="text-xs text-gray-500 mt-1">Ruris</div>
+<div className="text-center mb-4 flex flex-col items-center gap-2">
+        <img src="/brn-logo.png" alt="BRN" className="h-16 w-auto" />
+        <div className="text-[10px] uppercase tracking-[0.2em] text-gray-500">Blocked &middot; Running &middot; Next</div>
         </div>
 
     {error && (
