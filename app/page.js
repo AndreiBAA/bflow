@@ -424,8 +424,8 @@ return (
         <main className="min-h-screen flex flex-col">
         <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-gray-800">
         <div className="flex items-center gap-2">
-        <span className="text-xl font-semibold text-gray-100">BFlow</span>
-<span className="text-xs text-gray-500">- Blocked. Running. Next.</span>
+        <img src="/ruris-logo.png" alt="Ruris" className="h-6 w-auto" /><span className="text-xl font-semibold text-gray-100">BRN</span>
+<span className="text-xs text-gray-500">Ruris</span>
         </div>
 <div className="flex items-center gap-3">
         <div className="flex items-center bg-[#181b24] border border-gray-700 rounded-md p-0.5 text-sm">
