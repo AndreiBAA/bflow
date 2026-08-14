@@ -423,9 +423,12 @@ if (!authReady) {
 return (
         <main className="min-h-screen flex flex-col">
         <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-gray-800">
+        <div className="flex flex-col gap-0.5">
+        <span className="text-[9px] uppercase tracking-[0.15em] text-gray-500 leading-none">Blocked &middot; Running &middot; Next</span>
         <div className="flex items-center gap-2">
-        <img src="/ruris-logo.png" alt="Ruris" className="h-6 w-auto" /><span className="text-xl font-semibold text-gray-100">BRN</span>
-<span className="text-xs text-gray-500">Ruris</span>
+        <img src="/ruris-logo.png" alt="Ruris" className="h-7 w-auto" />
+        <span className="text-2xl font-extrabold tracking-tight bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 bg-clip-text text-transparent">BRN</span>
+        </div>
         </div>
 <div className="flex items-center gap-3">
         <div className="flex items-center bg-[#181b24] border border-gray-700 rounded-md p-0.5 text-sm">
