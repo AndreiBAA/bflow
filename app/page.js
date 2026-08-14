@@ -423,6 +423,7 @@ if (!authReady) {
 return (
         <main className="min-h-screen flex flex-col">
         <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-gray-800">
+<div className="flex flex-col items-start gap-0.5">
         <img src="/brn-logo.png" alt="BRN" className="h-8 w-auto" />
         <span className="text-[9px] uppercase tracking-[0.15em] text-gray-500 leading-none">Blocked &middot; Running &middot; Next</span>
         </div>
