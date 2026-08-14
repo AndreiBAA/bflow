@@ -127,7 +127,7 @@ export default function AdminPage() {
             <p className="text-xs text-gray-500 mt-1">Creeaza useri, seteaza roluri, asigneaza manageri pe proiecte.</p>
     </div>
           <Link href="/" className="text-sm text-gray-400 hover:text-gray-200">
-              <- Inapoi la board
+                                   Inapoi la board
     </Link>
     </div>
 
