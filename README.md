@@ -1,4 +1,4 @@
-# BFlow - task tracker personal (Andrei Bran)
+# BRN - task tracker personal (Andrei Bran)
 
 Board Kanban cu statusuri custom, jurnal de activitate per task, dark mode. Next.js + Supabase.
 
