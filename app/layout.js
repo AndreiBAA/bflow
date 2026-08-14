@@ -1,8 +1,11 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "BFlow",
-  description: "Task tracker personal — Andrei Bran",
+  title: "BRN",
+  description: "Task tracker - Ruris",
+  icons: {
+    icon: "/ruris-logo.png",
+  },
 };
 
 export default function RootLayout({ children }) {
