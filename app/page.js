@@ -8,7 +8,28 @@ import GanttView from "@/components/GanttView";
 import TaskModal from "@/components/TaskModal";
 import ApprovalsPanel from "@/components/ApprovalsPanel";
 import NotificationsBell from "@/components/NotificationsBell";
-const [filterMineOnly, setFilterMineOnly] = useState(false);
+export default function HomePage() {
+        const router = useRouter();
+        
+        const [authReady, setAuthReady] = useState(false);
+        const [user, setUser] = useState(null);
+        const [profile, setProfile] = useState(null);
+        
+        const [statuses, setStatuses] = useState([]);
+        const [tasks, setTasks] = useState([]);
+        const [projects, setProjects] = useState([]);
+        const [profilesAll, setProfilesAll] = useState([]);
+        const [myManagedProjectIds, setMyManagedProjectIds] = useState([]);
+        const [changeRequests, setChangeRequests] = useState([]);
+        const [notifications, setNotifications] = useState([]);
+        
+        const [loading, setLoading] = useState(true);
+        const [error, setError] = useState(null);
+        const [info, setInfo] = useState(null);
+        const [activeTask, setActiveTask] = useState(null);
+        const [filterProject, setFilterProject] = useState("");
+        const [filterUrgentOnly, setFilterUrgentOnly] = useState(false);
+        const [filterMineOnly, setFilterMineOnly] = useState(false);
 const [viewMode, setViewMode] = useState("board");
 const [showApprovals, setShowApprovals] = useState(false);
 const [showUserMenu, setShowUserMenu] = useState(false);
