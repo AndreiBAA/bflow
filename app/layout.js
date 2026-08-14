@@ -4,7 +4,7 @@ export const metadata = {
   title: "BRN",
   description: "Task tracker - Ruris",
   icons: {
-    icon: "/ruris-logo.png",
+        icon: "/brn-logo.png",
   },
 };
 
