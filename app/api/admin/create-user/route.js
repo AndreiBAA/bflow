@@ -6,36 +6,36 @@ const serviceKey = process.env.SUPABASE_SECRET_KEY;
 
 export async function POST(request) {
     if (!supabaseUrl || !serviceKey) {
-          return Response.json(
+        return Response.json(
             { error: "SUPABASE_SECRET_KEY nu este configurat pe server." },
             { status: 500 }
-                );
+            );
     }
 
-  const { email, password, full_name, role } = await request.json();
+const { email, password, full_name, role } = await request.json();
     if (!email || !password) {
-          return Response.json({ error: "Email si parola sunt obligatorii." }, { status: 400 });
+        return Response.json({ error: "Email si parola sunt obligatorii." }, { status: 400 });
     }
 
-  const admin = createClient(supabaseUrl, serviceKey);
+const admin = createClient(supabaseUrl, serviceKey);
 
-  const { data, error } = await admin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: full_name || null },
-  });
+const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: full_name || null },
+});
 
-  if (error) {
-        return Response.json({ error: error.message }, { status: 400 });
-  }
+if (error) {
+    return Response.json({ error: error.message }, { status: 400 });
+}
 
-  if (role && role !== "member") {
-        await admin.from("profiles").update({ role }).eq("id", data.user.id);
-  }
+// profilul e creat automat cu rolul "pending" de catre trigger-ul din baza de date;
+// aici il setam explicit la rolul ales de admin (creare directa = aprobare implicita).
+await admin.from("profiles").update({ role: role || "member" }).eq("id", data.user.id);
     if (full_name) {
-          await admin.from("profiles").update({ full_name }).eq("id", data.user.id);
+        await admin.from("profiles").update({ full_name }).eq("id", data.user.id);
     }
 
-  return Response.json({ ok: true, userId: data.user.id });
+return Response.json({ ok: true, userId: data.user.id });
 }
