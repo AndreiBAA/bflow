@@ -13,6 +13,7 @@ export default function AccountPage() {
   const [newPassword, setNewPassword] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
 
@@ -66,6 +67,33 @@ async function handleChangePassword(e) {
   setMessage("Parola a fost schimbata.");
 }
 
+async function handleAvatarUpload(e) {
+  const file = e.target.files?.[0];
+  if (!file || !user) return;
+  setUploadingAvatar(true);
+  setError(null);
+  setMessage(null);
+  const ext = file.name.split(".").pop() || "png";
+  const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+  const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+  if (upErr) {
+    setUploadingAvatar(false);
+    setError(upErr.message);
+    return;
+  }
+  const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+  const avatarUrl = urlData?.publicUrl || null;
+  const { error: updErr } = await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("id", user.id);
+  setUploadingAvatar(false);
+  if (updErr) {
+    setError(updErr.message);
+    return;
+  }
+  setProfile((prev) => ({ ...prev, avatar_url: avatarUrl }));
+  setMessage("Poza de profil a fost actualizata.");
+  e.target.value = "";
+}
+
 if (loading) {
   return (
     <main className="min-h-screen flex items-center justify-center">
@@ -89,11 +117,11 @@ return (
   {error}
     </div>
    )}
-  {message && (
-    <div className="bg-green-950 border border-green-800 text-green-300 text-sm px-3 py-2 rounded-md">
-  {message}
-    </div>
-   )}
+{message && (
+  <div className="bg-green-950 border border-green-800 text-green-300 text-sm px-3 py-2 rounded-md">
+{message}
+  </div>
+ )}
 
 <div className="bg-[#151824] border border-gray-800 rounded-lg p-5 space-y-3">
   <div>
@@ -106,6 +134,29 @@ return (
   </div>
   </div>
 
+<div className="bg-[#151824] border border-gray-800 rounded-lg p-5 space-y-3">
+  <div className="text-sm font-medium text-gray-200">Poza de profil</div>
+<div className="flex items-center gap-4">
+  <span className="w-16 h-16 rounded-full bg-blue-600 text-white flex items-center justify-center text-xl font-semibold uppercase overflow-hidden shrink-0">
+{profile?.avatar_url ? (
+  <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+  ) : (
+    (profile?.full_name || user?.email || "?").slice(0, 1)
+)}
+</span>
+<label className="cursor-pointer bg-[#0f1117] border border-gray-700 hover:border-gray-500 rounded-md px-3 py-1.5 text-sm text-gray-300">
+{uploadingAvatar ? "Se incarca..." : "Alege o poza"}
+<input
+type="file"
+accept="image/*"
+onChange={handleAvatarUpload}
+disabled={uploadingAvatar}
+className="hidden"
+/>
+  </label>
+  </div>
+  </div>
+
 <form onSubmit={handleSaveName} className="bg-[#151824] border border-gray-800 rounded-lg p-5 space-y-3">
   <div className="text-sm font-medium text-gray-200">Nume complet</div>
 <input
@@ -113,9 +164,9 @@ type="text"
 value={fullName}
 onChange={(e) => setFullName(e.target.value)}
 placeholder="Nume si prenume"
-  className="w-full bg-[#0f1117] border border-gray-700 rounded-md px-2 py-1.5 text-sm text-gray-200"
-/>
-    <button
+className="w-full bg-[#0f1117] border border-gray-700 rounded-md px-2 py-1.5 text-sm text-gray-200"
+  />
+  <button
 type="submit"
 disabled={savingName}
 className="bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white text-sm font-medium px-3 py-1.5 rounded-md"
@@ -135,9 +186,9 @@ className="w-full bg-[#0f1117] border border-gray-700 rounded-md px-2 py-1.5 tex
 />
   <button
 type="submit"
-  disabled={savingPassword}
+disabled={savingPassword}
 className="bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white text-sm font-medium px-3 py-1.5 rounded-md"
-  >
+>
 {savingPassword ? "Se salveaza..." : "Schimba parola"}
 </button>
   </form>
