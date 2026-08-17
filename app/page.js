@@ -8,31 +8,33 @@ import GanttView from "@/components/GanttView";
 import TaskModal from "@/components/TaskModal";
 import ApprovalsPanel from "@/components/ApprovalsPanel";
 import NotificationsBell from "@/components/NotificationsBell";
+import ProjectsPanel from "@/components/ProjectsPanel";
 export default function HomePage() {
         const router = useRouter();
-        
-        const [authReady, setAuthReady] = useState(false);
+
+const [authReady, setAuthReady] = useState(false);
         const [user, setUser] = useState(null);
         const [profile, setProfile] = useState(null);
-        
-        const [statuses, setStatuses] = useState([]);
+
+const [statuses, setStatuses] = useState([]);
         const [tasks, setTasks] = useState([]);
         const [projects, setProjects] = useState([]);
         const [profilesAll, setProfilesAll] = useState([]);
         const [myManagedProjectIds, setMyManagedProjectIds] = useState([]);
         const [changeRequests, setChangeRequests] = useState([]);
         const [notifications, setNotifications] = useState([]);
-        
-        const [loading, setLoading] = useState(true);
+
+const [loading, setLoading] = useState(true);
         const [error, setError] = useState(null);
         const [info, setInfo] = useState(null);
-        const [activeTask, setActiveTask] = useState(null);
+const [activeTask, setActiveTask] = useState(null);
         const [filterProject, setFilterProject] = useState("");
         const [filterUrgentOnly, setFilterUrgentOnly] = useState(false);
         const [filterMineOnly, setFilterMineOnly] = useState(false);
-const [viewMode, setViewMode] = useState("board");
-const [showApprovals, setShowApprovals] = useState(false);
-const [showUserMenu, setShowUserMenu] = useState(false);
+        const [viewMode, setViewMode] = useState("board");
+        const [showApprovals, setShowApprovals] = useState(false);
+        const [showUserMenu, setShowUserMenu] = useState(false);
+        const [showProjects, setShowProjects] = useState(false);
 
 // verificare autentificare
 useEffect(() => {
@@ -134,19 +136,23 @@ function getDescendantProjectIds(projectId) {
 const filterProjectIds = filterProject ? getDescendantProjectIds(filterProject) : null;
 
 const projectsById = Object.fromEntries(projects.map((p) => [p.id, p]));
-const profilesById = Object.fromEntries(profilesAll.map((p) => [p.id, p]));
-const tasksById = Object.fromEntries(tasks.map((t) => [t.id, t]));
+        const profilesById = Object.fromEntries(profilesAll.map((p) => [p.id, p]));
+        const tasksById = Object.fromEntries(tasks.map((t) => [t.id, t]));
 
 const myFullName = profile?.full_name || null;
 
 const visibleTasks = tasks
-.filter((t) => {
-        if (filterProjectIds && !filterProjectIds.includes(t.project_id)) return false;
-        if (filterUrgentOnly && !t.urgent) return false;
-        if (filterMineOnly && myFullName && t.assignee !== myFullName) return false;
-        return true;
-})
-.map((t) => ({ ...t, project_name: t.project_id ? projectsById[t.project_id]?.name : null }));
+        .filter((t) => {
+                if (filterProjectIds && !filterProjectIds.includes(t.project_id)) return false;
+                if (filterUrgentOnly && !t.urgent) return false;
+                if (filterMineOnly && myFullName && t.assignee !== myFullName) return false;
+                return true;
+        })
+        .map((t) => ({
+                ...t,
+                project_name: t.project_id ? projectsById[t.project_id]?.name : null,
+                project_color: t.project_id ? projectsById[t.project_id]?.color || null : null,
+        }));
 
 const myPendingRequests = changeRequests.filter((r) => {
         if (profile?.role === "admin") return true;
@@ -407,6 +413,49 @@ async function handleDeleteStatus(statusId) {
         setStatuses((prev) => prev.filter((s) => s.id !== statusId));
 }
 
+async function handleCreateProject({ name, parent_id, color }) {
+        const position = projects.length;
+        const { data, error: insErr } = await supabase
+        .from("projects")
+        .insert({ name, parent_id: parent_id || null, color, position })
+        .select()
+        .single();
+        if (insErr) {
+                throw new Error(insErr.message);
+        }
+        setProjects((prev) => [...prev, data]);
+}
+
+async function handleUpdateProjectColor(projectId, color) {
+        const { error: updErr } = await supabase.from("projects").update({ color }).eq("id", projectId);
+        if (updErr) {
+                setError(updErr.message);
+                return;
+        }
+        setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, color } : p)));
+}
+
+async function handleDeleteProject(project) {
+        const idsToDelete = getDescendantProjectIds(project.id);
+        const { error: taskDelErr } = await supabase.from("tasks").delete().in("project_id", idsToDelete);
+        if (taskDelErr) {
+                throw new Error(taskDelErr.message);
+        }
+        const depthById = Object.fromEntries(projectOptions.map((o) => [o.id, o.depth]));
+        const orderedIds = [...idsToDelete].sort((a, b) => (depthById[b] || 0) - (depthById[a] || 0));
+        for (const id of orderedIds) {
+                const { error: delErr } = await supabase.from("projects").delete().eq("id", id);
+                if (delErr) {
+                        throw new Error(delErr.message);
+                }
+        }
+        setProjects((prev) => prev.filter((p) => !idsToDelete.includes(p.id)));
+        setTasks((prev) => prev.filter((t) => !idsToDelete.includes(t.project_id)));
+        if (filterProject && idsToDelete.includes(filterProject)) {
+                setFilterProject("");
+        }
+}
+
 async function handleLogout() {
         await supabase.auth.signOut();
         router.push("/login");
@@ -422,95 +471,29 @@ if (!authReady) {
 
 return (
         <main className="min-h-screen flex flex-col">
-        <header className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-gray-800">
-<div className="flex flex-col items-start gap-0.5">
-        <img src="/brn-logo.png" alt="BRN" className="h-8 w-auto" />
-        <span className="text-[9px] uppercase tracking-[0.15em] text-gray-500 leading-none">Blocked &middot; Running &middot; Next</span>
+        <header className="flex flex-col border-b border-gray-800">
+        <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3">
+        <div className="flex flex-col items-start gap-0.5 min-w-0">
+        <img src="/brn-logo.png" alt="BRN" className="h-7 sm:h-8 w-auto" />
+        <span className="hidden sm:block text-[9px] uppercase tracking-[0.15em] text-gray-500 leading-none">Blocked &middot; Running &middot; Next</span>
         </div>
-<div className="flex items-center gap-3">
-        <div className="flex items-center bg-[#181b24] border border-gray-700 rounded-md p-0.5 text-sm">
-        <button
-onClick={() => setViewMode("board")}
-className={`px-2.5 py-1 rounded-md ${
-        viewMode === "board" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-gray-200"
-}`}
->
-Board
-        </button>
-<button
-onClick={() => setViewMode("gantt")}
-className={`px-2.5 py-1 rounded-md ${
-        viewMode === "gantt" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-gray-200"
-}`}
->
-Gantt
-        </button>
-        </div>
-<select
-value={filterProject}
-onChange={(e) => setFilterProject(e.target.value)}
-className="bg-[#181b24] border border-gray-700 rounded-md px-2 py-1 text-sm text-gray-300"
->
-        <option value="">Toate proiectele</option>
-{projectOptions
- .filter((p) => p.depth === 0)
- .map((top) => {
-         const children = projectOptions.filter((c) => c.parentId === top.id);
-         if (children.length === 0) {
-                 return (
-                         <option key={top.id} value={top.id}>
-      {top.name}
-      </option>
-      );
-}
-return (
-        <optgroup key={top.id} label={top.name}>
-<option value={top.id}>Tot proiectul ({top.name})</option>
-{children.map((c) => (
-        <option key={c.id} value={c.id}>
-{"    " + c.name}
-        </option>
-))}
-</optgroup>
-);
-})}
-</select>
-<label className="flex items-center gap-1 text-sm text-gray-400">
-        <input
-type="checkbox"
-checked={filterUrgentOnly}
-onChange={(e) => setFilterUrgentOnly(e.target.checked)}
-className="accent-red-500"
-/>
-        Doar urgente
-        </label>
-<label className="flex items-center gap-1 text-sm text-gray-400">
-        <input
-type="checkbox"
-checked={filterMineOnly}
-onChange={(e) => setFilterMineOnly(e.target.checked)}
-className="accent-blue-500"
-/>
-        Doar ale mele
-        </label>
-<button
-onClick={() => setActiveTask("new")}
-className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-3 py-1.5 rounded-md"
->
-        + Task nou
-        </button>
-
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
 {isPrivileged && (
         <button
- onClick={() => setShowApprovals(true)}
- className="relative text-sm text-gray-400 hover:text-gray-200 px-2 py-1.5"
- >
-         Aprobari
- {myPendingRequests.length > 0 && (
-         <span className="absolute -top-1 -right-1 bg-orange-600 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center">
- {myPendingRequests.length > 9 ? "9+" : myPendingRequests.length}
- </span>
- )}
+        onClick={() => setShowApprovals(true)}
+        title="Aprobari"
+        className="relative text-gray-400 hover:text-gray-200 p-1.5"
+        >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 3.5A1.5 1.5 0 0 1 10.5 2h3A1.5 1.5 0 0 1 15 3.5V4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-.5Z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="m9 14 2 2 4-4" />
+                </svg>
+        {myPendingRequests.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-orange-500 text-white text-[10px] rounded-full min-w-[16px] h-4 px-0.5 flex items-center justify-center">
+        {myPendingRequests.length > 9 ? "9+" : myPendingRequests.length}
+        </span>
+        )}
 </button>
 )}
 
@@ -520,19 +503,17 @@ onMarkRead={handleMarkNotificationRead}
 onMarkAllRead={handleMarkAllNotificationsRead}
 />
 
-{profile?.role === "admin" && (
-        <Link href="/admin" className="text-sm text-gray-400 hover:text-gray-200">
-        Admin
-        </Link>
- )}
-
-<div className="relative pl-2 border-l border-gray-800">
+        <div className="relative pl-2 border-l border-gray-800">
         <button
 onClick={() => setShowUserMenu((v) => !v)}
 className="flex items-center gap-2 text-sm text-gray-300 hover:text-white"
 >
-        <span className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold uppercase">
-{(profile?.full_name || user?.email || "?").slice(0, 1)}
+        <span className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold uppercase overflow-hidden shrink-0">
+{profile?.avatar_url ? (
+        <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+        ) : (
+                (profile?.full_name || user?.email || "?").slice(0, 1)
+)}
 </span>
 <span className="hidden sm:inline max-w-[140px] truncate">
 {profile?.full_name || user?.email}
@@ -552,6 +533,26 @@ className="block px-3 py-2 text-sm text-gray-300 hover:bg-[#232733]"
 >
         Contul meu
         </Link>
+{isPrivileged && (
+        <button
+ onClick={() => {
+         setShowUserMenu(false);
+         setShowProjects(true);
+ }}
+ className="w-full text-left px-3 py-2 text-sm text-gray-300 hover:bg-[#232733]"
+ >
+         Proiecte
+         </button>
+ )}
+{profile?.role === "admin" && (
+        <Link
+ href="/admin"
+ onClick={() => setShowUserMenu(false)}
+ className="block px-3 py-2 text-sm text-gray-300 hover:bg-[#232733]"
+ >
+         Admin
+         </Link>
+ )}
 <button
 onClick={() => {
         setShowUserMenu(false);
@@ -564,6 +565,94 @@ className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-[#232733]"
         </div>
 )}
 </div>
+        </div>
+        </div>
+
+<div className="flex flex-wrap items-center gap-2 px-4 sm:px-6 py-2.5">
+        <div className="flex items-center bg-[#181b24] border border-gray-700 rounded-md p-0.5 text-sm">
+        <button
+onClick={() => setViewMode("board")}
+className={`px-2.5 py-1 rounded-md ${
+        viewMode === "board" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-gray-200"
+}`}
+>
+Board
+        </button>
+<button
+onClick={() => setViewMode("gantt")}
+className={`px-2.5 py-1 rounded-md ${
+        viewMode === "gantt" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-gray-200"
+}`}
+>
+Gantt
+        </button>
+        </div>
+
+<button
+onClick={() => setFilterUrgentOnly((v) => !v)}
+className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm border ${
+        filterUrgentOnly
+        ? "bg-red-600/20 border-red-600 text-red-300"
+        : "bg-[#181b24] border-gray-700 text-gray-400 hover:text-gray-200"
+}`}
+>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
+        </svg>
+Urgente
+        </button>
+
+<button
+onClick={() => setFilterMineOnly((v) => !v)}
+className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm border ${
+        filterMineOnly
+        ? "bg-blue-600/20 border-blue-600 text-blue-300"
+        : "bg-[#181b24] border-gray-700 text-gray-400 hover:text-gray-200"
+}`}
+>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20 21a8 8 0 0 0-16 0" />
+        <circle cx="12" cy="7" r="4" />
+        </svg>
+Ale mele
+        </button>
+
+<select
+        value={filterProject}
+onChange={(e) => setFilterProject(e.target.value)}
+className="bg-[#181b24] border border-gray-700 rounded-md px-2 py-1.5 text-sm text-gray-300"
+>
+        <option value="">Toate proiectele</option>
+{projectOptions
+ .filter((p) => p.depth === 0)
+ .map((top) => {
+         const children = projectOptions.filter((c) => c.parentId === top.id);
+         if (children.length === 0) {
+                 return (
+                         <option key={top.id} value={top.id}>
+      {top.name}
+      </option>
+      );
+}
+return (
+        <optgroup key={top.id} label={top.name}>
+<option value={top.id}>Tot proiectul ({top.name})</option>
+{children.map((c) => (
+        <option key={c.id} value={c.id}>
+{" " + c.name}
+        </option>
+))}
+</optgroup>
+);
+        })}
+        </select>
+
+<button
+onClick={() => setActiveTask("new")}
+className="ml-auto bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-3 py-1.5 rounded-md"
+>
+        + Task nou
+        </button>
         </div>
         </header>
 
@@ -629,6 +718,18 @@ onDeleteStatus={handleDeleteStatus}
  onClose={() => setShowApprovals(false)}
  />
          )}
-</main>
-);
+
+{showProjects && (
+        <ProjectsPanel
+ projects={projects}
+ projectOptions={projectOptions}
+ tasks={tasks}
+ onClose={() => setShowProjects(false)}
+ onCreateProject={handleCreateProject}
+ onUpdateProjectColor={handleUpdateProjectColor}
+ onDeleteProject={handleDeleteProject}
+/>
+         )}
+         </main>
+ );
 }
