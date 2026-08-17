@@ -27,7 +27,7 @@ const [statuses, setStatuses] = useState([]);
 const [loading, setLoading] = useState(true);
         const [error, setError] = useState(null);
         const [info, setInfo] = useState(null);
-const [activeTask, setActiveTask] = useState(null);
+        const [activeTask, setActiveTask] = useState(null);
         const [filterProject, setFilterProject] = useState("");
         const [filterUrgentOnly, setFilterUrgentOnly] = useState(false);
         const [filterMineOnly, setFilterMineOnly] = useState(false);
@@ -44,7 +44,7 @@ useEffect(() => {
                 if (!active) return;
                 if (!data?.user) {
                         router.push("/login");
-                        return;
+        return;
                 }
                 setUser(data.user);
                 const { data: profileRow } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
@@ -63,6 +63,7 @@ useEffect(() => {
 }, [router]);
 
 const isPrivileged = profile?.role === "admin" || profile?.role === "manager";
+        const isPending = profile?.role === "pending";
 
 const loadAll = useCallback(async () => {
         if (!user) return;
@@ -100,8 +101,8 @@ const loadAll = useCallback(async () => {
 }, [user]);
 
 useEffect(() => {
-        if (authReady && user) loadAll();
-}, [authReady, user, loadAll]);
+        if (authReady && user && !isPending) loadAll();
+}, [authReady, user, isPending, loadAll]);
 
 // lista aplatizata pentru dropdown: proiect parinte, apoi subproiectele lui, cu adancime pentru indentare
 const projectOptions = (() => {
@@ -413,6 +414,16 @@ async function handleDeleteStatus(statusId) {
         setStatuses((prev) => prev.filter((s) => s.id !== statusId));
 }
 
+async function handleReorderStatuses(orderedIds) {
+        setStatuses((prev) => {
+                const byId = Object.fromEntries(prev.map((s) => [s.id, s]));
+                return orderedIds.map((id, idx) => ({ ...byId[id], position: idx }));
+        });
+        await Promise.all(
+                orderedIds.map((id, idx) => supabase.from("statuses").update({ position: idx }).eq("id", id))
+                );
+}
+
 async function handleCreateProject({ name, parent_id, color }) {
         const position = projects.length;
         const { data, error: insErr } = await supabase
@@ -465,6 +476,23 @@ if (!authReady) {
         return (
                 <main className="min-h-screen flex items-center justify-center">
                 <div className="text-gray-500 text-sm">Se verifica autentificarea...</div>
+                </main>
+        );
+}
+
+if (isPending) {
+        return (
+                <main className="min-h-screen flex items-center justify-center px-4">
+                <div className="max-w-sm text-center space-y-3">
+                <img src="/brn-logo.png" alt="BRN" className="h-10 w-auto mx-auto" />
+                <h2 className="text-gray-100 font-semibold">Cont in asteptare de aprobare</h2>
+        <p className="text-sm text-gray-400">
+                Contul tau a fost creat, dar un admin trebuie sa iti aprobe accesul inainte sa poti folosi aplicatia.
+                </p>
+        <button onClick={handleLogout} className="text-sm text-blue-400 hover:text-blue-300">
+                Delogare
+                </button>
+                </div>
                 </main>
         );
 }
@@ -618,7 +646,7 @@ Ale mele
         </button>
 
 <select
-        value={filterProject}
+value={filterProject}
 onChange={(e) => setFilterProject(e.target.value)}
 className="bg-[#181b24] border border-gray-700 rounded-md px-2 py-1.5 text-sm text-gray-300"
 >
@@ -644,8 +672,8 @@ return (
 ))}
 </optgroup>
 );
-        })}
-        </select>
+})}
+</select>
 
 <button
 onClick={() => setActiveTask("new")}
@@ -693,6 +721,7 @@ onOpenTask={(t) => setActiveTask(t)}
 onAddStatus={handleAddStatus}
 onRenameStatus={handleRenameStatus}
 onDeleteStatus={handleDeleteStatus}
+onReorderStatuses={handleReorderStatuses}
 />
         )}
         </div>
@@ -702,6 +731,7 @@ onDeleteStatus={handleDeleteStatus}
  task={activeTask === "new" ? null : activeTask}
          statuses={statuses}
  projectOptions={projectOptions}
+ profilesAll={profilesAll}
  onClose={() => setActiveTask(null)}
  onSave={handleSaveTask}
  onDelete={handleDeleteTask}
@@ -728,7 +758,7 @@ onDeleteStatus={handleDeleteStatus}
  onCreateProject={handleCreateProject}
  onUpdateProjectColor={handleUpdateProjectColor}
  onDeleteProject={handleDeleteProject}
-/>
+ />
          )}
          </main>
  );
