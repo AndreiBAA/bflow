@@ -146,7 +146,15 @@ const visibleTasks = tasks
         .filter((t) => {
                 if (filterProjectIds && !filterProjectIds.includes(t.project_id)) return false;
                 if (filterUrgentOnly && !t.urgent) return false;
-                if (filterMineOnly && myFullName && t.assignee !== myFullName) return false;
+                if (
+                        filterMineOnly &&
+                        myFullName &&
+                        !(t.assignee || "")
+                        .split(",")
+                        .map((s) => s.trim())
+                        .includes(myFullName)
+                        )
+                        return false;
                 return true;
         })
         .map((t) => ({
@@ -181,13 +189,19 @@ async function notifyManagers(projectId, message, taskId) {
         if (rows.length > 0) await supabase.from("notifications").insert(rows);
 }
 
-async function notifyAssignee(assigneeName, message, taskId) {
-        if (!assigneeName) return;
-        const assigneeProfile = profilesAll.find(
-                (p) => (p.full_name || "").trim().toLowerCase() === assigneeName.trim().toLowerCase()
-                );
-        if (!assigneeProfile || assigneeProfile.id === user.id) return;
-        await supabase.from("notifications").insert({ user_id: assigneeProfile.id, task_id: taskId, message });
+async function notifyAssignee(assigneeNames, message, taskId) {
+        if (!assigneeNames) return;
+        const names = assigneeNames
+        .split(",")
+        .map((n) => n.trim())
+        .filter(Boolean);
+        for (const name of names) {
+                const assigneeProfile = profilesAll.find(
+                        (p) => (p.full_name || "").trim().toLowerCase() === name.toLowerCase()
+                        );
+                if (!assigneeProfile || assigneeProfile.id === user.id) continue;
+                await supabase.from("notifications").insert({ user_id: assigneeProfile.id, task_id: taskId, message });
+        }
 }
 
 async function applyStatusChange(task, newStatusId) {
@@ -318,7 +332,7 @@ async function handleDeleteTask(task) {
 }
 
 async function handleApproveRequest(request) {
-        const task = tasksById[request.task_id];
+                        const task = tasksById[request.task_id];
         if (request.type === "delete") {
                 if (task) {
                         await supabase.from("tasks").delete().eq("id", task.id);
@@ -480,22 +494,22 @@ if (!authReady) {
         );
 }
 
-                if (isPending) {
-                        return (
-                                <main className="min-h-screen flex items-center justify-center px-4">
-                                <div className="max-w-sm text-center space-y-3">
-                                <img src="/brn-logo.png" alt="BRN" className="h-10 w-auto mx-auto" />
-                                <h2 className="text-gray-100 font-semibold">Cont in asteptare de aprobare</h2>
-                        <p className="text-sm text-gray-400">
-                                Contul tau a fost creat, dar un admin trebuie sa iti aprobe accesul inainte sa poti folosi aplicatia.
-                                </p>
-                        <button onClick={handleLogout} className="text-sm text-blue-400 hover:text-blue-300">
-                                Delogare
-                                </button>
-                                </div>
-                                </main>
-                        );
-                }
+if (isPending) {
+        return (
+                <main className="min-h-screen flex items-center justify-center px-4">
+                <div className="max-w-sm text-center space-y-3">
+                <img src="/brn-logo.png" alt="BRN" className="h-10 w-auto mx-auto" />
+                <h2 className="text-gray-100 font-semibold">Cont in asteptare de aprobare</h2>
+        <p className="text-sm text-gray-400">
+                Contul tau a fost creat, dar un admin trebuie sa iti aprobe accesul inainte sa poti folosi aplicatia.
+                </p>
+        <button onClick={handleLogout} className="text-sm text-blue-400 hover:text-blue-300">
+                Delogare
+                </button>
+                </div>
+                </main>
+        );
+}
 
 return (
         <main className="h-screen flex flex-col overflow-hidden">
@@ -523,7 +537,7 @@ return (
         </span>
         )}
 </button>
-                )}
+)}
 
 <NotificationsBell
 notifications={notifications}
@@ -652,13 +666,13 @@ className="bg-[#181b24] border border-gray-700 rounded-md px-2 py-1.5 text-sm te
 >
         <option value="">Toate proiectele</option>
 {projectOptions
- .filter((p) => p.depth === 0)
+        .filter((p) => p.depth === 0)
  .map((top) => {
          const children = projectOptions.filter((c) => c.parentId === top.id);
          if (children.length === 0) {
                  return (
                          <option key={top.id} value={top.id}>
-{top.name}
+      {top.name}
       </option>
       );
 }
@@ -670,19 +684,19 @@ return (
 {" " + c.name}
         </option>
 ))}
-</optgroup>
-);
-})}
+        </optgroup>
+ );
+        })}
 </select>
 
-<button
-        onClick={() => setActiveTask("new")}
-className="ml-auto bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-3 py-1.5 rounded-md"
+        <button
+onClick={() => setActiveTask("new")}
+        className="ml-auto bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-3 py-1.5 rounded-md"
 >
-        + Task nou
-        </button>
-        </div>
-        </header>
+                + Task nou
+                </button>
+                </div>
+                </header>
 
 {error && (
         <div className="bg-red-950 border border-red-800 text-red-300 text-sm px-4 py-2">
@@ -741,12 +755,12 @@ onReorderStatuses={handleReorderStatuses}
 {showApprovals && (
         <ApprovalsPanel
  requests={myPendingRequests}
- tasksById={tasksById}
+        tasksById={tasksById}
  profilesById={profilesById}
  onApprove={handleApproveRequest}
  onReject={handleRejectRequest}
  onClose={() => setShowApprovals(false)}
- />
+         />
          )}
 
 {showProjects && (
@@ -760,6 +774,6 @@ onReorderStatuses={handleReorderStatuses}
  onDeleteProject={handleDeleteProject}
  />
          )}
-         </main>
+</main>
  );
 }
