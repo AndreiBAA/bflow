@@ -36,8 +36,8 @@ export default function TaskCard({ task, onOpen }) {
           className="bg-[#181b24] border border-gray-800 hover:border-gray-600 rounded-md p-2.5 cursor-pointer transition-colors"
         >
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-sm text-gray-100 font-medium leading-snug">{task.title}</span>
-    {task.urgent && (
+				<span className="text-sm text-gray-100 font-medium leading-snug line-clamp-3">{task.title}</span>
+                  {task.urgent && (
                   <span title="Urgent" className="text-red-500 text-xs shrink-0">
                     *
         </span>
