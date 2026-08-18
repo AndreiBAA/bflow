@@ -452,12 +452,13 @@ async function handleCreateProject({ name, parent_id, color }) {
 }
 
 async function handleUpdateProjectColor(projectId, color) {
-        const { error: updErr } = await supabase.from("projects").update({ color }).eq("id", projectId);
-        if (updErr) {
+        const idsToUpdate = getDescendantProjectIds(projectId);
+	const { error: updErr } = await supabase.from("projects").update({ color }).in("id", idsToUpdate); 
+	if (updErr) {
                 setError(updErr.message);
                 return;
         }
-        setProjects((prev) => prev.map((p) => (p.id === projectId ? { ...p, color } : p)));
+	setProjects((prev) => prev.map((p) => (idsToUpdate.includes(p.id) ? { ...p, color } : p)));
 }
 
 async function handleDeleteProject(project) {
