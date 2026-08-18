@@ -44,7 +44,7 @@ useEffect(() => {
                 if (!active) return;
                 if (!data?.user) {
                         router.push("/login");
-        return;
+                        return;
                 }
                 setUser(data.user);
                 const { data: profileRow } = await supabase.from("profiles").select("*").eq("id", data.user.id).single();
@@ -480,25 +480,25 @@ if (!authReady) {
         );
 }
 
-if (isPending) {
-        return (
-                <main className="min-h-screen flex items-center justify-center px-4">
-                <div className="max-w-sm text-center space-y-3">
-                <img src="/brn-logo.png" alt="BRN" className="h-10 w-auto mx-auto" />
-                <h2 className="text-gray-100 font-semibold">Cont in asteptare de aprobare</h2>
-        <p className="text-sm text-gray-400">
-                Contul tau a fost creat, dar un admin trebuie sa iti aprobe accesul inainte sa poti folosi aplicatia.
-                </p>
-        <button onClick={handleLogout} className="text-sm text-blue-400 hover:text-blue-300">
-                Delogare
-                </button>
-                </div>
-                </main>
-        );
-}
+                if (isPending) {
+                        return (
+                                <main className="min-h-screen flex items-center justify-center px-4">
+                                <div className="max-w-sm text-center space-y-3">
+                                <img src="/brn-logo.png" alt="BRN" className="h-10 w-auto mx-auto" />
+                                <h2 className="text-gray-100 font-semibold">Cont in asteptare de aprobare</h2>
+                        <p className="text-sm text-gray-400">
+                                Contul tau a fost creat, dar un admin trebuie sa iti aprobe accesul inainte sa poti folosi aplicatia.
+                                </p>
+                        <button onClick={handleLogout} className="text-sm text-blue-400 hover:text-blue-300">
+                                Delogare
+                                </button>
+                                </div>
+                                </main>
+                        );
+                }
 
 return (
-        <main className="min-h-screen flex flex-col">
+        <main className="h-screen flex flex-col overflow-hidden">
         <header className="flex flex-col border-b border-gray-800">
         <div className="flex items-center justify-between gap-2 px-4 sm:px-6 py-3">
         <div className="flex flex-col items-start gap-0.5 min-w-0">
@@ -523,7 +523,7 @@ return (
         </span>
         )}
 </button>
-)}
+                )}
 
 <NotificationsBell
 notifications={notifications}
@@ -658,7 +658,7 @@ className="bg-[#181b24] border border-gray-700 rounded-md px-2 py-1.5 text-sm te
          if (children.length === 0) {
                  return (
                          <option key={top.id} value={top.id}>
-      {top.name}
+{top.name}
       </option>
       );
 }
@@ -676,7 +676,7 @@ return (
 </select>
 
 <button
-onClick={() => setActiveTask("new")}
+        onClick={() => setActiveTask("new")}
 className="ml-auto bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium px-3 py-1.5 rounded-md"
 >
         + Task nou
@@ -702,7 +702,7 @@ ascunde
         </div>
 )}
 
-<div className="flex-1 overflow-x-auto p-6">
+<div className="flex-1 overflow-auto p-6 min-h-0">
 {loading ? (
         <div className="text-gray-500 text-sm">Se incarca...</div>
         ) : viewMode === "gantt" ? (
