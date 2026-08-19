@@ -10,6 +10,7 @@ export default function Board({
       onAddStatus,
       onRenameStatus,
       onDeleteStatus,
+      onUpdateStatusColor,
       onReorderStatuses,
 }) {
       const [addingStatus, setAddingStatus] = useState(false);
@@ -46,6 +47,7 @@ export default function Board({
           onOpenTask={onOpenTask}
           onRenameStatus={onRenameStatus}
           onDeleteStatus={onDeleteStatus}
+            onUpdateStatusColor={onUpdateStatusColor}
           onReorderColumn={(draggedId) => handleColumnReorder(draggedId, status.id)}
         />
                     ))}
