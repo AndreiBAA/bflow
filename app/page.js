@@ -405,6 +405,15 @@ async function handleAddStatus(name) {
         setStatuses((prev) => [...prev, data]);
 }
 
+	async function handleUpdateStatusColor(statusId, color) {
+			const { error: updErr } = await supabase.from("statuses").update({ color }).eq("id", statusId);
+			if (updErr) {
+						setError(updErr.message);
+						return;
+			}
+			setStatuses((prev) => prev.map((s) => (s.id === statusId ? { ...s, color } : s)));
+	}
+
 async function handleRenameStatus(statusId, name) {
         const { error: updErr } = await supabase.from("statuses").update({ name }).eq("id", statusId);
         if (updErr) {
@@ -736,6 +745,7 @@ onOpenTask={(t) => setActiveTask(t)}
 onAddStatus={handleAddStatus}
 onRenameStatus={handleRenameStatus}
 onDeleteStatus={handleDeleteStatus}
+onUpdateStatusColor={handleUpdateStatusColor}
 onReorderStatuses={handleReorderStatuses}
 />
         )}
