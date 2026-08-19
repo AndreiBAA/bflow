@@ -2,7 +2,7 @@
 import { useState } from "react";
 import TaskCard from "./TaskCard";
 
-export default function Column({ status, tasks, onMoveTask, onOpenTask, onRenameStatus, onDeleteStatus, onReorderColumn }) {
+export default function Column({ status, tasks, onMoveTask, onOpenTask, onRenameStatus, onDeleteStatus, onReorderColumn, onUpdateStatusColor }) {
       const [dragOver, setDragOver] = useState(false);
       const [editingName, setEditingName] = useState(false);
       const [nameValue, setNameValue] = useState(status.name);
@@ -69,13 +69,22 @@ export default function Column({ status, tasks, onMoveTask, onOpenTask, onRename
              className="bg-[#0f1117] border border-gray-700 rounded-md px-1 text-sm text-gray-200 w-32"
            />
                          ) : (
-                                       <button
-                                         onClick={() => setEditingName(true)}
-                                         className="text-sm font-medium text-gray-200 flex items-center gap-2"
-           >
-                             <span className="w-3 h-3 rounded-full" style={{ backgroundColor: status.color }} />
-{status.name}
-</button>
+      <div className="flex items-center gap-2">
+            <input
+                  type="color"
+                  value={status.color || "#3b82f6"}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => onUpdateStatusColor && onUpdateStatusColor(status.id, e.target.value)}
+                  title="Schimba culoarea"
+                  className="status-color-dot"
+            />
+            <button
+                  onClick={() => setEditingName(true)}
+                  className="text-sm font-medium text-gray-200"
+            >
+                  {status.name}
+            </button>
+      </div>
         )}
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500">{tasks.length}</span>
