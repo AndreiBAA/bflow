@@ -1,4 +1,5 @@
-"use client";
+
+import RoadmapView from "@/components/RoadmapView";"use client";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -638,6 +639,7 @@ className={`px-2.5 py-1 rounded-md ${
 >
 Gantt
         </button>
+	<button onClick={() => setViewMode("roadmap")} className={`px-2.5 py-1 rounded-md ${viewMode === "roadmap" ? "bg-blue-600 text-white" : "text-gray-400 hover:text-gray-200"}`}>Roadmap</button>
         </div>
 
 <button
@@ -736,7 +738,10 @@ tasks={visibleTasks}
 statuses={statuses}
 onOpenTask={(t) => setActiveTask(t)}
 />
-        ) : (
+) : viewMode === "roadmap" ? (
+	<RoadmapView tasks={visibleTasks} statuses={statuses} projects={projects} />
+	
+) : (
                 <Board
 statuses={statuses}
 tasks={visibleTasks}
