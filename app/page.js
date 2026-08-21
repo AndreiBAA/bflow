@@ -1,5 +1,5 @@
-
-import RoadmapView from "@/components/RoadmapView";"use client";
+"use client";
+import RoadmapView from "@/components/RoadmapView";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
