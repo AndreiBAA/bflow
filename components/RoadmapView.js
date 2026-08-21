@@ -213,14 +213,14 @@ function addDays(date, days) {
             {weeks.map((w, i) => (
                                 <div key={i} className="text-[10px] text-gray-500 text-center pb-1 border-b border-gray-800">{formatDay(w)}</div>
                                        ))}
-{ganttTasks.map((t) => {
+{ganttTasks.map((t, gi) => {
                     const startIdx = weekIndexOf(new Date(t.start_date));
                     const endIdx = weekIndexOf(new Date(t.deadline));
                     const color = statusById[t.status_id]?.color || "#3b82f6";
                     return (
                                           <React.Fragment key={t.id}>
-                                      <div className="text-xs text-gray-400 truncate py-1 pr-2">{t.title}</div>
-                                      <div style={{ gridColumn: `${startIdx + 2} / ${endIdx + 3}`, backgroundColor: color }} className="h-4 rounded-md self-center" title={t.title} />
+                                      <div style={{ gridRow: gi + 2 }} className="text-xs text-gray-400 truncate py-1 pr-2">{t.title}</div>
+                                      <div style={{ gridColumn: `${startIdx + 2} / ${endIdx + 3}`, gridRow: gi + 2, backgroundColor: color }} className="h-4 rounded-md self-center" title={t.title} />
   </React.Fragment>
                   );
 })}
