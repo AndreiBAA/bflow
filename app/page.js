@@ -10,6 +10,7 @@ import TaskModal from "@/components/TaskModal";
 import ApprovalsPanel from "@/components/ApprovalsPanel";
 import NotificationsBell from "@/components/NotificationsBell";
 import ProjectsPanel from "@/components/ProjectsPanel";
+import ProjectFilterDropdown from "@/components/ProjectFilterDropdown";
 export default function HomePage() {
         const router = useRouter();
 
@@ -671,35 +672,7 @@ className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm border ${
 Ale mele
         </button>
 
-<select
-value={filterProject}
-onChange={(e) => setFilterProject(e.target.value)}
-className="bg-[#181b24] border border-gray-700 rounded-md px-2 py-1.5 text-sm text-gray-300"
->
-        <option value="">Toate proiectele</option>
-{projectOptions
-        .filter((p) => p.depth === 0)
- .map((top) => {
-         const children = projectOptions.filter((c) => c.parentId === top.id);
-         if (children.length === 0) {
-                 return (
-                         <option key={top.id} value={top.id}>
-      {top.name}
-      </option>
-      );
-}
-return (
-        <optgroup key={top.id} label={top.name}>
-<option value={top.id}>Tot proiectul ({top.name})</option>
-{children.map((c) => (
-        <option key={c.id} value={c.id}>
-{" " + c.name}
-        </option>
-))}
-        </optgroup>
- );
-        })}
-</select>
+<ProjectFilterDropdown projects={projects} tasks={tasks} statuses={statuses} value={filterProject} onChange={setFilterProject} />
 
         <button
 onClick={() => setActiveTask("new")}
