@@ -3,6 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import ConfirmDialog from "@/components/ConfirmDialog";
 
 const ROLE_LABELS = { admin: "Admin", manager: "Manager", member: "Membru" };
 
@@ -20,6 +21,7 @@ const [profiles, setProfiles] = useState([]);
     const [info, setInfo] = useState(null);
     const [search, setSearch] = useState("");
     const [busyId, setBusyId] = useState(null);
+    const [confirmDeleteTarget, setConfirmDeleteTarget] = useState(null);
 
 const [form, setForm] = useState({ full_name: "", email: "", password: "", role: "member" });
     const [creating, setCreating] = useState(false);
@@ -146,8 +148,13 @@ async function handleApproveUser(profileId) {
     setInfo("Cont aprobat. Userul poate accesa aplicatia ca membru.");
 }
 
-async function handleDeleteUser(profileId, label) {
-    if (!confirm(`Sigur vrei sa stergi definitiv userul "${label}"? Aceasta actiune nu poate fi anulata.`)) return;
+function handleDeleteUser(profileId, label) {
+        setConfirmDeleteTarget({ id: profileId, label });
+}
+
+    async function performDeleteUser() {
+            if (!confirmDeleteTarget) return;
+            const { id: profileId, label } = confirmDeleteTarget;
     setBusyId(profileId);
     setError(null);
     try {
@@ -166,6 +173,7 @@ async function handleDeleteUser(profileId, label) {
         setInfo(`Userul "${label}" a fost sters.`);
     } finally {
         setBusyId(null);
+        setConfirmDeleteTarget(null);
     }
 }
 
@@ -188,6 +196,7 @@ if (!ready) {
 }
 
 return (
+    <>
     <main className="min-h-screen px-6 py-6">
     <div className="flex items-center justify-between mb-6">
     <div>
@@ -400,5 +409,16 @@ style={{ marginLeft: proj.depth * 8 }}
     </div>
     </div>
     </main>
+<ConfirmDialog
+    open={!!confirmDeleteTarget}
+    title="Sterge definitiv userul?"
+    message={confirmDeleteTarget ? `Sigur vrei sa stergi definitiv userul "${confirmDeleteTarget.label}"? Aceasta actiune nu poate fi anulata.` : ""}
+    confirmLabel="Sterge definitiv"
+    danger
+    loading={!!busyId && confirmDeleteTarget && busyId === confirmDeleteTarget.id}
+    onCancel={() => setConfirmDeleteTarget(null)}
+    onConfirm={performDeleteUser}
+/>
+        </>
 );
 }
