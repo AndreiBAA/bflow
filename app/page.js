@@ -36,8 +36,7 @@ const [loading, setLoading] = useState(true);
         const [filterMineOnly, setFilterMineOnly] = useState(false);
 	const [filterShowArchived, setFilterShowArchived] = useState(false);
         const [viewMode, setViewMode] = useState("board");
-        const [showApprovals, setShowApprovals] = useState(false);
-        const [showUserMenu, setShowUserMenu] = useState(false);
+                const [showUserMenu, setShowUserMenu] = useState(false);
 	const userMenuRef = useClickOutside(() => setShowUserMenu(false), showUserMenu);
         const [showProjects, setShowProjects] = useState(false);
 
@@ -563,23 +562,14 @@ return (
         </div>
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
 {isPrivileged && (
-        <button
-        onClick={() => setShowApprovals(true)}
-        title="Aprobari"
-        className="relative text-gray-400 hover:text-gray-200 p-1.5"
-        >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 3.5A1.5 1.5 0 0 1 10.5 2h3A1.5 1.5 0 0 1 15 3.5V4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-.5Z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="m9 14 2 2 4-4" />
-                </svg>
-        {myPendingRequests.length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-orange-500 text-white text-[10px] rounded-full min-w-[16px] h-4 px-0.5 flex items-center justify-center">
-        {myPendingRequests.length > 9 ? "9+" : myPendingRequests.length}
-        </span>
-        )}
-</button>
-)}
+	<ApprovalsPanel
+	requests={myPendingRequests}
+		tasksById={tasksById}
+			profilesById={profilesById}
+				onApprove={handleApproveRequest}
+					onReject={handleRejectRequest}
+						/>
+						)}
 
 <NotificationsBell
 notifications={notifications}
@@ -785,17 +775,6 @@ onReorderStatuses={handleReorderStatuses}
  onDelete={handleDeleteTask}
 	 onRestore={handleRestoreTask}
  />
-         )}
-
-{showApprovals && (
-        <ApprovalsPanel
- requests={myPendingRequests}
-        tasksById={tasksById}
- profilesById={profilesById}
- onApprove={handleApproveRequest}
- onReject={handleRejectRequest}
- onClose={() => setShowApprovals(false)}
-         />
          )}
 
 {showProjects && (
