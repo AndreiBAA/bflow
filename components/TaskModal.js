@@ -15,7 +15,7 @@ const emptyForm = {
         	status_id: "",
 };
 
-export default function TaskModal({ task, statuses, projectOptions, profilesAll, onClose, onSave, onDelete, onRestore }) {
+export default function TaskModal({ task, statuses, projectOptions, profilesAll, onClose, onSave, onDelete, onRestore, isPrivileged, onPermanentDelete }) {
         	const [form, setForm] = useState(
                         		task
                         			? {
@@ -32,6 +32,7 @@ export default function TaskModal({ task, statuses, projectOptions, profilesAll,
                         	);
         	const [assigneeInput, setAssigneeInput] = useState("");
         	const [confirmArchiveOpen, setConfirmArchiveOpen] = useState(false);
+	const [confirmPermanentDeleteOpen, setConfirmPermanentDeleteOpen] = useState(false);
         	const assigneeBoxRef = useClickOutside(() => setAssigneeInput(""), !!assigneeInput.trim());
 
 	function update(field, value) {
@@ -252,7 +253,16 @@ export default function TaskModal({ task, statuses, projectOptions, profilesAll,
 									>
                                                                                         										Restaureaza task
                                                                                         </button>
-								) : (
+{isPrivileged && (
+	<button
+	type="button"
+ onClick={() => setConfirmPermanentDeleteOpen(true)}
+ className="text-sm text-red-500 hover:text-red-400 ml-3"
+ >
+	 Sterge definitiv
+	 </button>
+ )}
+) : (
                                                                         									<button
 										type="button"
 										onClick={() => setConfirmArchiveOpen(true)}
@@ -295,6 +305,18 @@ export default function TaskModal({ task, statuses, projectOptions, profilesAll,
                                         					onDelete(task);
                                 }}
 			/>
+				<ConfirmDialog
+				open={confirmPermanentDeleteOpen}
+					title="Sterge definitiv task-ul?"
+						message="Aceasta actiune este ireversibila. Task-ul va fi sters permanent din baza de date."
+							confirmLabel="Sterge definitiv"
+								danger={true}
+									onCancel={() => setConfirmPermanentDeleteOpen(false)}
+										onConfirm={() => {
+											setConfirmPermanentDeleteOpen(false);
+											onPermanentDelete && onPermanentDelete(task);
+										}}
+/>
                                 </div>
                                 </div>
 	);
