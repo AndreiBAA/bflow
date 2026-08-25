@@ -9,6 +9,7 @@ import GanttView from "@/components/GanttView";
 import TaskModal from "@/components/TaskModal";
 import ApprovalsPanel from "@/components/ApprovalsPanel";
 import NotificationsBell from "@/components/NotificationsBell";
+import AuditLogPanel from "@/components/AuditLogPanel";
 import ProjectsPanel from "@/components/ProjectsPanel";
 import ProjectFilterDropdown from "@/components/ProjectFilterDropdown";
 import useClickOutside from "@/lib/useClickOutside";
@@ -182,7 +183,7 @@ const myPendingRequests = changeRequests.filter((r) => {
 });
 
 async function logActivity(taskId, action, detail) {
-        await supabase.from("task_activity").insert({ task_id: taskId, action, detail });
+        await supabase.from("task_activity").insert({ task_id: taskId, action, detail, performed_by: user?.id || null });
 }
 
 async function notifyManagers(projectId, message, taskId) {
@@ -358,7 +359,18 @@ await logActivity(task.id, "archived", {});
 			setActiveTask(null);
 	}
 
-async function handleApproveRequest(request) {
+async function handlePermanentDeleteTask(task) {
+	await logActivity(task.id, "deleted_permanently", { title: task.title });
+	const { error: delErr } = await supabase.from("tasks").delete().eq("id", task.id);
+	if (delErr) {
+		setError(delErr.message);
+		return;
+	}
+	setTasks((prev) => prev.filter((t) => t.id !== task.id));
+	setActiveTask(null);
+}
+	
+	async function handleApproveRequest(request) {
                         const task = tasksById[request.task_id];
         if (request.type === "delete") {
                 if (task) {
@@ -576,6 +588,12 @@ notifications={notifications}
 onMarkRead={handleMarkNotificationRead}
 onMarkAllRead={handleMarkAllNotificationsRead}
 />
+{isPrivileged && (
+	<AuditLogPanel
+	tasksById={tasksById}
+		profilesById={profilesById}
+			/>
+			)}
 
         <div className="relative pl-2 border-l border-gray-800" ref={userMenuRef}>
         <button
@@ -774,6 +792,8 @@ onReorderStatuses={handleReorderStatuses}
  onSave={handleSaveTask}
  onDelete={handleDeleteTask}
 	 onRestore={handleRestoreTask}
+		 isPrivileged={isPrivileged}
+			 onPermanentDelete={handlePermanentDeleteTask}
  />
          )}
 
