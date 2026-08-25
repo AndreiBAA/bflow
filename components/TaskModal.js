@@ -246,7 +246,8 @@ export default function TaskModal({ task, statuses, projectOptions, profilesAll,
                                                                 						<div>
                                                         {task && (
                                                                 								task.archived ? (
-                                                                           												<button                                                             									<button
+<>
+															<button                                                             									<button
                                                                 										type="button"
                                                                 										onClick={() => onRestore && onRestore(task)}
 										className="text-sm text-blue-400 hover:text-blue-300"
@@ -262,7 +263,8 @@ export default function TaskModal({ task, statuses, projectOptions, profilesAll,
 	 Sterge definitiv
 	 </button>
  )}
-) : (
+</>
+	) : (
                                                                         									<button
 										type="button"
 										onClick={() => setConfirmArchiveOpen(true)}
