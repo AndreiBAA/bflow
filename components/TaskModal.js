@@ -243,40 +243,38 @@ export default function TaskModal({ task, statuses, projectOptions, profilesAll,
                                                                 </label>
 
 					<div className="flex items-center justify-between pt-2">
-                                                                						<div>
-                                                        {task && (
-                                                                								task.archived ? (
-<>
-															<button                                                             									<button
-                                                                										type="button"
-                                                                										onClick={() => onRestore && onRestore(task)}
-										className="text-sm text-blue-400 hover:text-blue-300"
+<div>
+							{task && (
+								task.archived ? (
+									<button
+								type="button"
+								onClick={() => onRestore && onRestore(task)}
+								className="text-sm text-blue-400 hover:text-blue-300"
 									>
-                                                                                        										Restaureaza task
-                                                                                        </button>
-{isPrivileged && (
+									Restaureaza task
+									</button>
+									) : (
+										<button
+										type="button"
+											onClick={() => setConfirmArchiveOpen(true)}
+												className="text-sm text-red-500 hover:text-red-400"
+													>
+													Arhiveaza task
+													</button>
+													)
+														)}
+{isPrivileged && task && task.archived && (
 	<button
 	type="button"
- onClick={() => setConfirmPermanentDeleteOpen(true)}
- className="text-sm text-red-500 hover:text-red-400 ml-3"
- >
-	 Sterge definitiv
-	 </button>
- )}
-</>
-	) : (
-                                                                        									<button
-										type="button"
-										onClick={() => setConfirmArchiveOpen(true)}
-										className="text-sm text-red-500 hover:text-red-400"
-									>
-                                                                                        										Arhiveaza task
-                                                                                        </button>
-								)
-							)}
+		onClick={() => setConfirmPermanentDeleteOpen(true)}
+			className="text-sm text-red-500 hover:text-red-400 ml-3"
+				>
+				Sterge definitiv
+				</button>
+				)}
 </div>
-						<div className="flex gap-2">
-        							<button type="button" onClick={onClose} className="text-sm text-gray-400 px-3 py-1.5">
+	<div className="flex gap-2">
+	<button type="button" onClick={onClose} className="text-sm text-gray-400 px-3 py-1.5">
         								Anuleaza
         </button>
                                                                                         							<button
