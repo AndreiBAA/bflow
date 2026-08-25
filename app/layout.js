@@ -3,10 +3,7 @@ import "./globals.css";
 export const metadata = {
   title: "BRN",
   description: "Task tracker - Ruris",
-  icons: {
-        icon: "/brn-logo.png",
-  },
-};
+  };
 
 export default function RootLayout({ children }) {
   return (
