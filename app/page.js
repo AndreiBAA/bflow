@@ -11,6 +11,7 @@ import ApprovalsPanel from "@/components/ApprovalsPanel";
 import NotificationsBell from "@/components/NotificationsBell";
 import ProjectsPanel from "@/components/ProjectsPanel";
 import ProjectFilterDropdown from "@/components/ProjectFilterDropdown";
+import useClickOutside from "@/lib/useClickOutside";
 export default function HomePage() {
         const router = useRouter();
 
@@ -33,9 +34,11 @@ const [loading, setLoading] = useState(true);
         const [filterProject, setFilterProject] = useState("");
         const [filterUrgentOnly, setFilterUrgentOnly] = useState(false);
         const [filterMineOnly, setFilterMineOnly] = useState(false);
+	const [filterShowArchived, setFilterShowArchived] = useState(false);
         const [viewMode, setViewMode] = useState("board");
         const [showApprovals, setShowApprovals] = useState(false);
         const [showUserMenu, setShowUserMenu] = useState(false);
+	const userMenuRef = useClickOutside(() => setShowUserMenu(false), showUserMenu);
         const [showProjects, setShowProjects] = useState(false);
 
 // verificare autentificare
@@ -146,6 +149,11 @@ const myFullName = profile?.full_name || null;
 
 const visibleTasks = tasks
         .filter((t) => {
+			if (filterShowArchived) {
+				    if (!t.archived) return false;
+			} else if (t.archived) {
+				    return false;
+			}
                 if (filterProjectIds && !filterProjectIds.includes(t.project_id)) return false;
                 if (filterUrgentOnly && !t.urgent) return false;
                 if (
@@ -324,21 +332,43 @@ async function handleDeleteTask(task) {
                 setActiveTask(null);
                 return;
         }
-        const { error: delErr } = await supabase.from("tasks").delete().eq("id", task.id);
+        const { error: delErr } = await supabase
+	    .from("tasks")
+	    .update({ archived: true, updated_at: new Date().toISOString() })
+	    .eq("id", task.id);
         if (delErr) {
                 setError(delErr.message);
                 return;
         }
-        setTasks((prev) => prev.filter((t) => t.id !== task.id));
+await logActivity(task.id, "archived", {});
+			setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, archived: true } : t)));
         setActiveTask(null);
 }
+
+	async function handleRestoreTask(task) {
+			const { error: restoreErr } = await supabase
+				.from("tasks")
+				.update({ archived: false, updated_at: new Date().toISOString() })
+				.eq("id", task.id);
+			if (restoreErr) {
+						setError(restoreErr.message);
+						return;
+			}
+			await logActivity(task.id, "restored", {});
+			setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, archived: false } : t)));
+			setActiveTask(null);
+	}
 
 async function handleApproveRequest(request) {
                         const task = tasksById[request.task_id];
         if (request.type === "delete") {
                 if (task) {
-                        await supabase.from("tasks").delete().eq("id", task.id);
-                        setTasks((prev) => prev.filter((t) => t.id !== task.id));
+await supabase
+											.from("tasks")
+											.update({ archived: true, updated_at: new Date().toISOString() })
+											.eq("id", task.id);
+										await logActivity(task.id, "archived", {});
+										setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, archived: true } : t)));
                 }
         } else if (request.type === "edit" && task) {
                 await supabase
@@ -557,7 +587,7 @@ onMarkRead={handleMarkNotificationRead}
 onMarkAllRead={handleMarkAllNotificationsRead}
 />
 
-        <div className="relative pl-2 border-l border-gray-800">
+        <div className="relative pl-2 border-l border-gray-800" ref={userMenuRef}>
         <button
 onClick={() => setShowUserMenu((v) => !v)}
 className="flex items-center gap-2 text-sm text-gray-300 hover:text-white"
@@ -672,6 +702,21 @@ className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm border ${
 Ale mele
         </button>
 
+	<button
+	onClick={() => setFilterShowArchived((v) => !v)}
+		title="Arata task-urile arhivate"
+			className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm border ${
+					filterShowArchived
+						? "bg-orange-600/20 border-orange-600 text-orange-300"
+						: "bg-[#181b24] border-gray-700 text-gray-400 hover:text-gray-200"
+			}`}
+>
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+		<path strokeLinecap="round" strokeLinejoin="round" d="M21 8v13H3V8M1 3h22v5H1V3Zm9 8h4" />
+	</svg>
+	Arhivate
+		</button>
+
 <ProjectFilterDropdown projects={projects} tasks={tasks} statuses={statuses} value={filterProject} onChange={setFilterProject} />
 
         <button
@@ -738,6 +783,7 @@ onReorderStatuses={handleReorderStatuses}
  onClose={() => setActiveTask(null)}
  onSave={handleSaveTask}
  onDelete={handleDeleteTask}
+	 onRestore={handleRestoreTask}
  />
          )}
 
